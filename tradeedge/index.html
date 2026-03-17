@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeEdge — Private Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --cream-dark: #EDE6D6;
+    --cream-deeper: #E0D5C0;
+    --wine: #7B2D3E;
+    --wine-dark: #5C1F2C;
+    --wine-light: #9B3D51;
+    --wine-faint: #F9F0F2;
+    --wine-tint: #EDD5DA;
+    --charcoal: #2A2826;
+    --charcoal-mid: #3D3A37;
+    --charcoal-light: #5C5854;
+    --gold: #B8924A;
+    --gold-light: #D4AF72;
+    --gold-faint: #FAF3E6;
+    --slate: #6B7280;
+    --slate-light: #9CA3AF;
+    --border: rgba(42,40,38,0.12);
+    --border-strong: rgba(42,40,38,0.22);
+    --shadow: 0 1px 3px rgba(42,40,38,0.08), 0 4px 16px rgba(42,40,38,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--charcoal); min-height: 100vh; }
+
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: var(--charcoal);
+    background-image: radial-gradient(ellipse at 30% 20%, rgba(123,45,62,0.18) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 80%, rgba(184,146,74,0.08) 0%, transparent 50%);
+  }
+  .login-card {
+    width: 380px; padding: 3rem 2.5rem;
+    background: var(--cream); border-radius: 4px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.4); text-align: center;
+  }
+  .login-monogram {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--wine); margin: 0 auto 1.5rem;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 500; color: var(--cream); letter-spacing: 2px;
+  }
+  .login-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; color: var(--charcoal); margin-bottom: 4px; }
+  .login-sub { font-size: 12px; color: var(--slate); margin-bottom: 2.5rem; letter-spacing: .04em; text-transform: uppercase; }
+  .login-card input[type=password] {
+    width: 100%; padding: 11px 14px; border-radius: 3px;
+    border: 1px solid var(--border-strong); background: var(--cream-dark);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--charcoal);
+    margin-bottom: 12px; outline: none; letter-spacing: 3px; text-align: center; transition: border-color .2s;
+  }
+  .login-card input:focus { border-color: var(--wine); }
+  .login-btn {
+    width: 100%; padding: 11px; background: var(--wine); color: var(--cream);
+    border: none; border-radius: 3px; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: background .2s;
+  }
+  .login-btn:hover { background: var(--wine-dark); }
+  .login-error { font-size: 12px; color: var(--wine); margin-top: 10px; opacity: 0; transition: opacity .2s; }
+  .login-error.show { opacity: 1; }
+
+  #app { display: none; }
+  .topbar {
+    height: 56px; background: var(--charcoal);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; position: sticky; top: 0; z-index: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .topbar-brand { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--cream); letter-spacing: .03em; }
+  .topbar-brand em { color: var(--gold-light); font-style: italic; }
+  .topbar-right { display: flex; align-items: center; gap: 1.5rem; }
+  .topbar-session { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold-light); border: 1px solid rgba(184,146,74,0.3); padding: 4px 12px; border-radius: 20px; }
+  .topbar-logout { font-size: 12px; color: var(--slate-light); cursor: pointer; background: none; border: none; letter-spacing: .04em; }
+  .topbar-logout:hover { color: var(--cream); }
+
+  .nav-tabs {
+    background: var(--charcoal-mid); display: flex; padding: 0 2rem; gap: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05); overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 13px 20px; font-size: 12px; font-weight: 400; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--slate-light); background: none; border: none;
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap;
+  }
+  .nav-tab:hover { color: var(--cream-dark); }
+  .nav-tab.active { color: var(--gold-light); border-bottom-color: var(--gold); }
+
+  .main { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .card-header {
+    font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500;
+    color: var(--charcoal); margin-bottom: 1.25rem; padding-bottom: .75rem;
+    border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px;
+  }
+  .card-header::before { content: ''; width: 3px; height: 18px; background: var(--wine); border-radius: 2px; flex-shrink: 0; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--slate); }
+  input[type=text], input[type=date], input[type=number], select, textarea {
+    font-family: 'DM Sans', sans-serif; font-size: 13.5px; padding: 9px 12px;
+    border: 1px solid var(--border-strong); border-radius: 3px; background: var(--cream);
+    color: var(--charcoal); outline: none; transition: border-color .15s; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--wine); background: #fff; }
+  textarea { resize: vertical; min-height: 85px; line-height: 1.6; }
+
+  .dir-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dir-btn {
+    padding: 9px 12px; border: 1px solid var(--border-strong); border-radius: 3px;
+    background: var(--cream); color: var(--slate); font-size: 12px; font-weight: 500;
+    letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: all .15s; text-align: center;
+  }
+  .dir-btn.bull.active { background: #EFF7F2; border-color: #4A8C63; color: #2D6B47; }
+  .dir-btn.bear.active { background: var(--wine-tint); border-color: var(--wine); color: var(--wine-dark); }
+
+  .model-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .model-btn {
+    padding: 12px; border: 1px solid var(--border-strong); border-radius: 3px;
+    background: var(--cream-dark); color: var(--slate); font-size: 12px; font-weight: 500;
+    letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: all .15s; text-align: center;
+  }
+  .model-btn.active { background: var(--wine-faint); border-color: var(--wine); color: var(--wine-dark); }
+
+  .quiz-wrap { display: none; }
+  .quiz-step { display: none; }
+  .quiz-step.active { display: block; }
+  .step-bar { display: flex; gap: 6px; align-items: center; margin-bottom: 1.25rem; }
+  .step-node { width: 7px; height: 7px; border-radius: 50%; background: var(--cream-deeper); transition: all .2s; }
+  .step-node.active { background: var(--wine); width: 22px; border-radius: 4px; }
+  .step-node.done { background: var(--gold); }
+  .quiz-title { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 500; color: var(--charcoal); margin-bottom: 4px; }
+  .quiz-sub { font-size: 12px; color: var(--slate); margin-bottom: 1rem; }
+
+  .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  .opt-btn {
+    padding: 11px 14px; border: 1px solid var(--border-strong); border-radius: 3px;
+    background: var(--cream); color: var(--charcoal); font-size: 13px;
+    cursor: pointer; transition: all .15s; text-align: left; line-height: 1.5;
+  }
+  .opt-btn:hover { border-color: var(--wine); background: var(--wine-faint); }
+  .opt-btn.selected { border-color: var(--wine); background: var(--wine-faint); color: var(--wine-dark); font-weight: 500; }
+  .opt-btn small { font-size: 11px; color: var(--slate); display: block; margin-top: 2px; font-weight: 400; }
+  .opt-btn.selected small { color: var(--wine-light); }
+
+  .checklist { display: flex; flex-direction: column; gap: 7px; margin-bottom: 1rem; }
+  .check-item {
+    display: flex; align-items: center; gap: 11px; padding: 10px 13px;
+    border: 1px solid var(--border); border-radius: 3px; background: var(--cream); cursor: pointer; transition: all .15s;
+  }
+  .check-item:hover { border-color: var(--wine); }
+  .check-item.checked { background: var(--wine-faint); border-color: var(--wine-light); }
+  .check-box { width: 17px; height: 17px; border: 1.5px solid var(--border-strong); border-radius: 2px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; transition: all .15s; }
+  .check-item.checked .check-box { background: var(--wine); border-color: var(--wine); }
+  .check-item-label { font-size: 13px; color: var(--charcoal); }
+  .check-item.checked .check-item-label { color: var(--wine-dark); }
+
+  .quiz-nav { display: flex; gap: 8px; margin-top: .5rem; }
+  .btn-next { padding: 9px 20px; background: var(--wine); color: var(--cream); border: none; border-radius: 3px; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: background .15s; }
+  .btn-next:hover { background: var(--wine-dark); }
+  .btn-back { padding: 9px 16px; background: none; border: 1px solid var(--border-strong); border-radius: 3px; font-size: 12px; color: var(--slate); cursor: pointer; transition: all .15s; }
+  .btn-back:hover { border-color: var(--charcoal); color: var(--charcoal); }
+
+  .quiz-summary { background: var(--cream-dark); border-radius: 3px; padding: 1rem; border: 1px solid var(--border); margin-top: .5rem; }
+  .sum-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .sum-row:last-child { border-bottom: none; }
+  .sum-key { color: var(--slate); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  .sum-val { font-weight: 500; color: var(--wine-dark); }
+
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .upload-zone {
+    border: 1.5px dashed var(--border-strong); border-radius: 3px; padding: 1.25rem;
+    text-align: center; cursor: pointer; transition: all .15s; background: var(--cream);
+    min-height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden;
+  }
+  .upload-zone:hover { border-color: var(--wine); background: var(--wine-faint); }
+  .upload-icon { font-size: 22px; margin-bottom: 6px; opacity: .5; }
+  .upload-lbl { font-size: 11px; color: var(--slate); letter-spacing: .04em; }
+  .upload-zone img { max-width: 100%; border-radius: 2px; display: none; }
+  .upload-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1rem; }
+  .stat-card { background: var(--cream-dark); border-radius: 3px; padding: 1.25rem; text-align: center; border: 1px solid var(--border); }
+  .stat-val { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--charcoal); }
+  .stat-val.green { color: #2D6B47; }
+  .stat-val.red { color: var(--wine); }
+  .stat-val.gold { color: var(--gold); }
+  .stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .09em; color: var(--slate); margin-top: 4px; }
+
+  .entry-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border: 1px solid var(--border); border-radius: 3px; background: #fff; margin-bottom: 6px; transition: all .15s; }
+  .entry-row:hover { border-color: var(--wine-light); background: var(--wine-faint); }
+  .entry-pair { font-size: 14px; font-weight: 500; color: var(--charcoal); }
+  .entry-meta { font-size: 11px; color: var(--slate); margin-top: 2px; }
+  .entry-right { display: flex; align-items: center; gap: 10px; }
+  .pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+  .pill-win { background: #EFF7F2; color: #2D6B47; border: 1px solid #A8D5B8; }
+  .pill-loss { background: var(--wine-tint); color: var(--wine-dark); border: 1px solid #D9A5B0; }
+  .pill-be { background: var(--gold-faint); color: #5C4012; border: 1px solid #D4AF72; }
+  .pnl { font-size: 13px; font-weight: 500; }
+  .pnl.pos { color: #2D6B47; }
+  .pnl.neg { color: var(--wine); }
+  .pnl.be { color: var(--gold); }
+
+  .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+  .save-btn { width: 100%; padding: 12px; background: var(--wine); color: var(--cream); border: none; border-radius: 3px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; margin-top: .5rem; transition: background .15s; }
+  .save-btn:hover { background: var(--wine-dark); }
+
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--charcoal); color: var(--cream); padding: 12px 20px; border-radius: 3px; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all .25s; border-left: 3px solid var(--gold); }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .empty-state { text-align: center; padding: 2.5rem 1rem; font-size: 13px; color: var(--slate); }
+  .empty-icon { font-size: 28px; opacity: .3; margin-bottom: .75rem; }
+
+  @media(max-width:600px){
+    .form-row, .form-row3 { grid-template-columns: 1fr; }
+    .opt-grid { grid-template-columns: 1fr; }
+    .upload-grid { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .main { padding: 1.25rem 1rem; }
+    .topbar { padding: 0 1rem; }
+    .nav-tabs { padding: 0 1rem; }
+    .nav-tab { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-monogram">TE</div>
+    <div class="login-title">TradeEdge</div>
+    <div class="login-sub">Private Trading Journal</div>
+    <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Enter</button>
+    <div class="login-error" id="login-err">Incorrect password</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">Trade<em>Edge</em></div>
+    <div class="topbar-right">
+      <span class="topbar-session">NY Session</span>
+      <button class="topbar-logout" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('new',this)">+ New Trade</button>
+    <button class="nav-tab" onclick="showTab('premarket',this)">Pre-Market</button>
+    <button class="nav-tab" onclick="showTab('htf',this)">HTF Analysis</button>
+    <button class="nav-tab" onclick="showTab('psych',this)">Psychology</button>
+    <button class="nav-tab" onclick="showTab('stats',this)">Stats & Log</button>
+  </div>
+
+  <div class="main">
+
+    <!-- NEW TRADE -->
+    <div class="section active" id="sec-new">
+      <div class="card">
+        <div class="card-header">Trade Details</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="t-date"></div>
+          <div class="form-group"><label class="form-label">Instrument</label><input type="text" id="t-pair" placeholder="e.g. NAS100, EURUSD, XAUUSD"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Direction</label>
+            <div class="dir-toggle">
+              <button class="dir-btn bull" onclick="setDir('bull',this)">▲ Bullish</button>
+              <button class="dir-btn bear" onclick="setDir('bear',this)">▼ Bearish</button>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">NY Session Time</label><input type="text" id="t-time" placeholder="e.g. 09:35 NY"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Trade Model</div>
+        <div class="model-toggle">
+          <button class="model-btn" onclick="setModel('continuation',this)">Continuation</button>
+          <button class="model-btn" onclick="setModel('reversal',this)">Reversal</button>
+        </div>
+
+        <!-- CONTINUATION -->
+        <div class="quiz-wrap" id="quiz-cont">
+          <div class="step-bar" id="cont-bar"></div>
+          <div class="quiz-step active" id="cs-0">
+            <div class="quiz-title">Step 1 — SMT on M5</div>
+            <div class="quiz-sub">Confirm the Smart Money Technique is present on the 5-minute chart.</div>
+            <div class="checklist">
+              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">SMT divergence visible on M5</span></div>
+              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">Correlated pair confirms the SMT</span></div>
+              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">SMT aligns with HTF directional bias</span></div>
+              <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">No conflicting market structure on M5</span></div>
+            </div>
+            <div class="quiz-nav"><button class="btn-next" onclick="cStep(1)">Next →</button></div>
+          </div>
+          <div class="quiz-step" id="cs-1">
+            <div class="quiz-title">Step 2 — Entry Model</div>
+            <div class="quiz-sub">Which break & test entry did you execute?</div>
+            <div class="opt-grid">
+              <button class="opt-btn" onclick="selOpt(this,'c-entry','bt-induced')">B&T Induced<small>Aggressive — break, retest, enter</small></button>
+              <button class="opt-btn" onclick="selOpt(this,'c-entry','bt-extra')">B&T Extra Leg<small>One extra BOS confirmation first</small></button>
+            </div>
+            <div class="quiz-nav">
+              <button class="btn-back" onclick="cStep(0)">← Back</button>
+              <button class="btn-next" onclick="cStep(2)">Next →</button>
+            </div>
+          </div>
+          <div class="quiz-step" id="cs-2">
+            <div class="quiz-title">Step 3 — Point of Interest</div>
+            <div class="quiz-sub">Which POI was mitigated for this trade?</div>
+            <div id="c-poi-grid"></div>
+            <div class="quiz-nav">
+              <button class="btn-back" onclick="cStep(1)">← Back</button>
+              <button class="btn-next" onclick="cStep(3)">Next →</button>
+            </div>
+          </div>
+          <div class="quiz-step" id="cs-3">
+            <div class="quiz-title">Continuation — Confirmed</div>
+            <div class="quiz-summary" id="c-summary"></div>
+          </div>
+        </div>
+
+        <!-- REVERSAL -->
+        <div class="quiz-wrap" id="quiz-rev">
+          <div class="step-bar" id="rev-bar"></div>
+          <div class="quiz-step active" id="rs-0">
+            <div class="quiz-title">Step 1 — Point of Interest</div>
+            <div class="quiz-sub">Which POI was mitigated at the reversal?</div>
+            <div id="r-poi-grid"></div>
+            <div class="quiz-nav"><button class="btn-next" onclick="rStep(1)">Next →</button></div>
+          </div>
+          <div class="quiz-step" id="rs-1">
+            <div class="quiz-title">Step 2 — Mitigation</div>
+            <div class="quiz-sub">Was there mitigation present at the zone?</div>
+            <div class="opt-grid">
+              <button class="opt-btn" onclick="selOpt(this,'r-mit','mitigated')">Mitigated</button>
+              <button class="opt-btn" onclick="selOpt(this,'r-mit','no-mitigation')">No Mitigation</button>
+            </div>
+            <div class="quiz-nav">
+              <button class="btn-back" onclick="rStep(0)">← Back</button>
+              <button class="btn-next" onclick="rStep(2)">Next →</button>
+            </div>
+          </div>
+          <div class="quiz-step" id="rs-2">
+            <div class="quiz-title">Step 3 — Entry Model</div>
+            <div class="quiz-sub">Which entry did you take at the reversal?</div>
+            <div class="opt-grid">
+              <button class="opt-btn" onclick="selOpt(this,'r-entry','bt-induced')">B&T Induced<small>Aggressive — break, retest, enter</small></button>
+              <button class="opt-btn" onclick="selOpt(this,'r-entry','bt-extra')">B&T Extra Leg<small>One extra BOS confirmation first</small></button>
+            </div>
+            <div class="quiz-nav">
+              <button class="btn-back" onclick="rStep(1)">← Back</button>
+              <button class="btn-next" onclick="rStep(3)">Next →</button>
+            </div>
+          </div>
+          <div class="quiz-step" id="rs-3">
+            <div class="quiz-title">Reversal — Confirmed</div>
+            <div class="quiz-summary" id="r-summary"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Outcome</div>
+        <div class="form-row3">
+          <div class="form-group">
+            <label class="form-label">Result</label>
+            <select id="t-result">
+              <option value="">Select...</option>
+              <option value="win">Win</option>
+              <option value="loss">Loss</option>
+              <option value="be">Break Even</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">% Gain / Loss</label><input type="number" id="t-pnl" placeholder="e.g. 2.5 or -1" step="0.01"></div>
+          <div class="form-group"><label class="form-label">RR Achieved</label><input type="text" id="t-rr" placeholder="e.g. 1:3 or 1:10"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Trade Notes</label><textarea id="t-notes" placeholder="What happened? Any deviations from the plan?"></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Trade Screenshots</div>
+        <div class="upload-grid">
+          <div class="form-group"><label class="form-label">Entry chart</label><div class="upload-zone"><div class="upload-icon">⬆</div><div class="upload-lbl">Click to upload</div><img id="pi-e1"><input type="file" class="upload-input" accept="image/*" onchange="prevImg(this,'pi-e1')"></div></div>
+          <div class="form-group"><label class="form-label">Exit / result chart</label><div class="upload-zone"><div class="upload-icon">⬆</div><div class="upload-lbl">Click to upload</div><img id="pi-e2"><input type="file" class="upload-input" accept="image/*" onchange="prevImg(this,'pi-e2')"></div></div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveTrade()">Save Trade Entry</button>
+    </div>
+
+    <!-- PRE-MARKET -->
+    <div class="section" id="sec-premarket">
+      <div class="card">
+        <div class="card-header">Pre-Market Analysis</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="pm-date"></div>
+          <div class="form-group">
+            <label class="form-label">Session Bias</label>
+            <div class="dir-toggle">
+              <button class="dir-btn bull" onclick="setDirPm('bull',this)">▲ Bullish</button>
+              <button class="dir-btn bear" onclick="setDirPm('bear',this)">▼ Bearish</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label class="form-label">Scenario A — Primary</label><textarea id="pm-a" placeholder="What is your primary read? What needs to happen for the setup to trigger?"></textarea></div>
+        <div class="form-group" style="margin-bottom:12px"><label class="form-label">Scenario B — Alternative</label><textarea id="pm-b" placeholder="What invalidates scenario A? What is the opposite case?"></textarea></div>
+        <div class="form-group"><label class="form-label">Key Levels</label><textarea id="pm-levels" placeholder="Liquidity pools, FVGs, OBs, highs/lows to watch..." style="min-height:65px"></textarea></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Pre-Market Screenshots</div>
+        <div class="upload-grid">
+          <div class="form-group"><label class="form-label">Chart 1</label><div class="upload-zone"><div class="upload-icon">⬆</div><div class="upload-lbl">Click to upload</div><img id="pi-pm1"><input type="file" class="upload-input" accept="image/*" onchange="prevImg(this,'pi-pm1')"></div></div>
+          <div class="form-group"><label class="form-label">Chart 2</label><div class="upload-zone"><div class="upload-icon">⬆</div><div class="upload-lbl">Click to upload</div><img id="pi-pm2"><input type="file" class="upload-input" accept="image/*" onchange="prevImg(this,'pi-pm2')"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HTF -->
+    <div class="section" id="sec-htf">
+      <div class="card">
+        <div class="card-header">Higher Timeframe Explanation</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Timeframe(s)</label><input type="text" id="htf-tf" placeholder="e.g. Daily / H4 / H1"></div>
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="htf-date"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label class="form-label">HTF Narrative</label><textarea id="htf-narrative" placeholder="Where is price in the draw? What is the macro bias? Key POIs above/below?" style="min-height:120px"></textarea></div>
+        <div class="form-group"><label class="form-label">Key HTF Levels</label><textarea id="htf-levels" placeholder="Daily/H4 highs, lows, FVGs, OBs, liquidity pools..." style="min-height:65px"></textarea></div>
+      </div>
+      <div class="card">
+        <div class="card-header">HTF Screenshots</div>
+        <div class="upload-grid">
+          <div class="form-group"><label class="form-label">HTF chart 1</label><div class="upload-zone"><div class="upload-icon">⬆</div><div class="upload-lbl">Click to upload</div><img id="pi-h1"><input type="file" class="upload-input" accept="image/*" onchange="prevImg(this,'pi-h1')"></div></div>
+          <div class="form-group"><label class="form-label">HTF chart 2</label><div class="upload-zone"><div class="upload-icon">⬆</div><div class="upload-lbl">Click to upload</div><img id="pi-h2"><input type="file" class="upload-input" accept="image/*" onchange="prevImg(this,'pi-h2')"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PSYCHOLOGY -->
+    <div class="section" id="sec-psych">
+      <div class="card">
+        <div class="card-header">Psychology Check-In</div>
+        <div style="margin-bottom:1.25rem">
+          <label class="form-label" style="margin-bottom:8px;display:block">Mental state before the session</label>
+          <div class="opt-grid">
+            <button class="opt-btn" style="text-align:center" onclick="selOpt(this,'psych-state','focused')">Focused</button>
+            <button class="opt-btn" style="text-align:center" onclick="selOpt(this,'psych-state','neutral')">Neutral</button>
+            <button class="opt-btn" style="text-align:center" onclick="selOpt(this,'psych-state','anxious')">Anxious</button>
+            <button class="opt-btn" style="text-align:center" onclick="selOpt(this,'psych-state','revenge')">Revenge mode</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="margin-bottom:1.25rem">
+          <label class="form-label" style="margin-bottom:8px;display:block">Did you journal your bias before looking for entries?</label>
+          <div class="opt-grid" style="grid-template-columns:1fr 1fr">
+            <button class="opt-btn" style="text-align:center" onclick="selOpt(this,'psych-bias','yes')">Yes — followed the plan</button>
+            <button class="opt-btn" style="text-align:center" onclick="selOpt(this,'psych-bias','fomo')">No — FOMO entry</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <label class="form-label" style="margin-bottom:8px;display:block">Emotional discipline checklist</label>
+        <div class="checklist">
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">I waited for my full model to set up before entering</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">No trades taken out of FOMO after a missed setup</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">No revenge trades taken after a loss</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">Respected maximum daily drawdown limit</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-item-label">Closed charts when my session plan was complete</span></div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-group"><label class="form-label">Session Reflection</label><textarea id="psych-notes" placeholder="How did your mind behave today? Any emotional cascade patterns? What would you do differently?" style="min-height:110px"></textarea></div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="section" id="sec-stats">
+      <div class="card">
+        <div class="card-header">Performance Overview</div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Total Trades</div></div>
+          <div class="stat-card"><div class="stat-val gold" id="st-wr">0%</div><div class="stat-lbl">Win Rate</div></div>
+          <div class="stat-card"><div class="stat-val" id="st-pnl">0%</div><div class="stat-lbl">Net P&L %</div></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-val green" id="st-w">0</div><div class="stat-lbl">Wins</div></div>
+          <div class="stat-card"><div class="stat-val red" id="st-l">0</div><div class="stat-lbl">Losses</div></div>
+          <div class="stat-card"><div class="stat-val gold" id="st-be">0</div><div class="stat-lbl">Break Even</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Trade Log</div>
+        <div id="trade-log"><div class="empty-state"><div class="empty-icon">📋</div>No trades logged yet</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://bsntkfoxvzftgnofgfqg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzbnRrZm94dnpmdGdub2ZnZnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTk4NTAsImV4cCI6MjA4OTMzNTg1MH0.CT3rNkhYJW_pOJfERr1j6dZY-fn1bw88QhFYrVPZpT8';
+const APP_PASSWORD = 'PatrickJane12u2';
+
+let S = {
+  dir: null, model: null, cstep: 0, rstep: 0, trades: [],
+  sel: {'c-entry':null,'c-poi':null,'r-poi':null,'r-mit':null,'r-entry':null,'psych-state':null,'psych-bias':null}
+};
+
+const BULL_POI = ['Demand → Supply Zone','Extreme Demand','Decisional Demand','No Mitigation'];
+const BEAR_POI = ['Supply → Demand Zone','Extreme Supply','Decisional Supply','No Mitigation'];
+
+function doLogin(){
+  const pw = document.getElementById('pw-input').value;
+  if(pw === APP_PASSWORD){
+    sessionStorage.setItem('te_auth','1');
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    initDates(); loadTrades();
+  } else {
+    const e = document.getElementById('login-err');
+    e.classList.add('show');
+    setTimeout(()=>e.classList.remove('show'), 2500);
+  }
+}
+function logout(){ sessionStorage.removeItem('te_auth'); location.reload(); }
+
+if(sessionStorage.getItem('te_auth')==='1'){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  initDates(); loadTrades();
+}
+
+function showTab(id, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='stats') renderStats();
+}
+
+function setDir(d, btn){
+  S.dir = d;
+  document.querySelectorAll('#sec-new .dir-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(S.model) renderPOI();
+}
+function setDirPm(d, btn){
+  document.querySelectorAll('#sec-premarket .dir-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setModel(m, btn){
+  S.model = m;
+  document.querySelectorAll('.model-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('quiz-cont').style.display = m==='continuation' ? 'block' : 'none';
+  document.getElementById('quiz-rev').style.display  = m==='reversal'     ? 'block' : 'none';
+  buildBar(m==='continuation' ? 'cont-bar' : 'rev-bar', 4);
+  renderPOI();
+}
+function buildBar(id, n){
+  document.getElementById(id).innerHTML = Array.from({length:n},(_,i)=>`<div class="step-node${i===0?' active':''}" id="${id}-${i}"></div>`).join('');
+}
+function updateBar(id, step, total){
+  for(let i=0;i<total;i++){
+    const d = document.getElementById(id+'-'+i);
+    if(!d) continue;
+    d.className = 'step-node'+(i<step?' done':i===step?' active':'');
+  }
+}
+function renderPOI(){
+  const opts = S.dir==='bear' ? BEAR_POI : BULL_POI;
+  const make = (key) => `<div class="opt-grid">${opts.map(o=>`<button class="opt-btn" onclick="selOpt(this,'${key}','${o}')">${o}</button>`).join('')}</div>`;
+  document.getElementById('c-poi-grid').innerHTML = make('c-poi');
+  document.getElementById('r-poi-grid').innerHTML = make('r-poi');
+}
+
+function cStep(s){
+  document.querySelectorAll('[id^=cs-]').forEach(el=>el.classList.remove('active'));
+  document.getElementById('cs-'+s).classList.add('active');
+  S.cstep = s; updateBar('cont-bar', s, 4);
+  if(s===3) document.getElementById('c-summary').innerHTML = sumHTML([['Model','Continuation'],['Entry',S.sel['c-entry']||'—'],['Point of Interest',S.sel['c-poi']||'—']]);
+}
+function rStep(s){
+  document.querySelectorAll('[id^=rs-]').forEach(el=>el.classList.remove('active'));
+  document.getElementById('rs-'+s).classList.add('active');
+  S.rstep = s; updateBar('rev-bar', s, 4);
+  if(s===3) document.getElementById('r-summary').innerHTML = sumHTML([['Model','Reversal'],['Point of Interest',S.sel['r-poi']||'—'],['Mitigation',S.sel['r-mit']||'—'],['Entry',S.sel['r-entry']||'—']]);
+}
+function sumHTML(rows){ return rows.map(([k,v])=>`<div class="sum-row"><span class="sum-key">${k}</span><span class="sum-val">${v}</span></div>`).join(''); }
+
+function toggleCheck(el){
+  el.classList.toggle('checked');
+  el.querySelector('.check-box').textContent = el.classList.contains('checked') ? '✓' : '';
+}
+function selOpt(btn, key, val){
+  btn.closest('.opt-grid').querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  S.sel[key] = val;
+}
+function prevImg(input, imgId){
+  const file = input.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    const img = document.getElementById(imgId);
+    img.src = e.target.result; img.style.display='block';
+    const zone = img.closest('.upload-zone');
+    zone.querySelector('.upload-icon').style.display='none';
+    zone.querySelector('.upload-lbl').style.display='none';
+  };
+  r.readAsDataURL(file);
+}
+function initDates(){
+  const today = new Date().toISOString().slice(0,10);
+  ['t-date','pm-date','htf-date'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=today; });
+}
+function toast(msg, color='var(--gold)'){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.borderLeftColor = color;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+async function dbFetch(path, opts={}){
+  const res = await fetch(SUPABASE_URL+path, {
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    ...opts
+  });
+  if(!res.ok) return null;
+  try{ return await res.json(); }catch{ return null; }
+}
+async function loadTrades(){
+  const data = await dbFetch('/rest/v1/trades?select=*&order=created_at.desc');
+  if(data) S.trades = data;
+}
+async function saveTrade(){
+  const pair   = document.getElementById('t-pair').value.trim()||'Unknown';
+  const date   = document.getElementById('t-date').value;
+  const result = document.getElementById('t-result').value;
+  const pnl    = parseFloat(document.getElementById('t-pnl').value)||0;
+  const rr     = document.getElementById('t-rr').value.trim();
+  const notes  = document.getElementById('t-notes').value.trim();
+  const time   = document.getElementById('t-time').value.trim();
+  if(!result){ toast('Please select a result', 'var(--wine)'); return; }
+  const trade = {pair,date,time,direction:S.dir,model:S.model,result,pnl,rr,notes,
+    poi:S.sel['c-poi']||S.sel['r-poi']||null,
+    entry_model:S.sel['c-entry']||S.sel['r-entry']||null,
+    mitigation:S.sel['r-mit']||null};
+  const saved = await dbFetch('/rest/v1/trades',{method:'POST',body:JSON.stringify(trade)});
+  if(saved){ S.trades.unshift(saved[0]||trade); toast('Trade saved ✓'); resetForm(); }
+  else toast('Save failed — check Supabase setup', 'var(--wine)');
+}
+function resetForm(){
+  ['t-pair','t-time','t-rr','t-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('t-pnl').value='';
+  document.getElementById('t-result').value='';
+  S.model=null; S.dir=null;
+  S.sel={'c-entry':null,'c-poi':null,'r-poi':null,'r-mit':null,'r-entry':null,'psych-state':null,'psych-bias':null};
+  document.querySelectorAll('.model-btn,.dir-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('quiz-cont').style.display='none';
+  document.getElementById('quiz-rev').style.display='none';
+}
+function renderStats(){
+  const t = S.trades;
+  const wins=t.filter(x=>x.result==='win').length;
+  const losses=t.filter(x=>x.result==='loss').length;
+  const be=t.filter(x=>x.result==='be').length;
+  const wr=t.length?Math.round(wins/t.length*100):0;
+  const net=t.reduce((a,b)=>a+(parseFloat(b.pnl)||0),0);
+  document.getElementById('st-total').textContent=t.length;
+  document.getElementById('st-wr').textContent=wr+'%';
+  const pnlEl=document.getElementById('st-pnl');
+  pnlEl.textContent=(net>=0?'+':'')+net.toFixed(2)+'%';
+  pnlEl.className='stat-val '+(net>0?'green':net<0?'red':'gold');
+  document.getElementById('st-w').textContent=wins;
+  document.getElementById('st-l').textContent=losses;
+  document.getElementById('st-be').textContent=be;
+  const log=document.getElementById('trade-log');
+  if(!t.length){log.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div>No trades logged yet</div>';return;}
+  log.innerHTML=t.map(tr=>{
+    const cls=tr.result==='win'?'pos':tr.result==='loss'?'neg':'be';
+    const pill=tr.result==='win'?'pill-win':tr.result==='loss'?'pill-loss':'pill-be';
+    const lbl=tr.result==='win'?'Win':tr.result==='loss'?'Loss':'BE';
+    const p=parseFloat(tr.pnl)||0;
+    return `<div class="entry-row">
+      <div>
+        <div class="entry-pair">${tr.pair} <span style="font-size:11px;font-weight:400;color:var(--slate)">${tr.direction||''}</span></div>
+        <div class="entry-meta">${tr.date||''} · ${tr.model||'—'} · ${tr.entry_model||'—'} · ${tr.poi||'—'}</div>
+      </div>
+      <div class="entry-right">
+        <span class="pill ${pill}">${lbl}</span>
+        <span class="pnl ${cls}">${(p>=0?'+':'')+p.toFixed(2)}%</span>
+        <span style="font-size:11px;color:var(--slate)">${tr.rr||''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
